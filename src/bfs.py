@@ -7,7 +7,7 @@ Steps:
   4. If the line runs out, the cheese cannot be reached.
   5. If found, follow the parent map back to the mouse and flip it.
 """
-
+import random
 from collections import deque
 
 OPEN = 0
@@ -99,3 +99,41 @@ def solve(grid):
         path = reconstruct_path(parent, goal)
         return len(path) - 1, path, visited_order
     return None, [], visited_order
+
+def explore(grid):
+    """Return (moves, found).
+
+    moves = every cell the mouse stood on, in order (backtracking steps included)
+    found = True if the mouse reached the cheese
+    """
+    start = find_cell(grid, MOUSE)
+    if start is None:
+        return [], False
+
+    visited = {start}
+    way_back = [start]      # the cells from the start to where the mouse is now
+    moves = [start]
+
+    while way_back:
+        row, col = way_back[-1]
+
+        if grid[row][col] == CHEESE:      # the mouse found the cheese
+            return moves, True
+
+        # cells next to the mouse that it has not visited yet
+        choices = []
+        for neighbor in get_neighbors(grid, (row, col)):
+            if neighbor not in visited:
+                choices.append(neighbor)
+
+        if choices:
+            next_cell = random.choice(choices)   # blind, so it just picks one
+            visited.add(next_cell)
+            way_back.append(next_cell)
+            moves.append(next_cell)
+        else:
+            way_back.pop()                       # dead end, step back
+            if way_back:
+                moves.append(way_back[-1])
+
+    return moves, False
