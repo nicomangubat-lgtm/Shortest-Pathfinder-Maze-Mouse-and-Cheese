@@ -1,7 +1,6 @@
 import maze_model
 import edit_maze
 import bfs
-# import blind_exploration
 
 SIZE = 16
 
@@ -31,12 +30,15 @@ def make_grid(obstacles, mouse, cheese):
     return grid
 
 
-def draw_maze(obstacles, mouse, cheese, scanned=None):
-    # M = mouse, C = cheese, | = wall, space = empty, ~ = scanned cell
+def draw_maze(obstacles, mouse, cheese, scanned=None, path=None):
+    # M = mouse, C = cheese, | = wall, space = empty, ~ = scanned cell, + = shortest path
     # the # line around the maze is only the border so you can see its edges
     if scanned is None:
         scanned = []
+    if path is None:
+        path = []
     scanned = set(scanned)
+    path = set(path)
 
     print("#" * (SIZE * 2 + 3))
     for row in range(SIZE):
@@ -48,9 +50,11 @@ def draw_maze(obstacles, mouse, cheese, scanned=None):
             elif cell == cheese:
                 symbol = "C"
             elif cell in obstacles:
-                symbol = "|"
+                symbol = "/"
+            elif cell in path:
+                symbol = "+"
             elif cell in scanned:
-                symbol = "~"
+                symbol = "."
             else:
                 symbol = " "
             line = line + symbol + " "
@@ -62,9 +66,11 @@ def show_menu():
     print()
     print("1. Regenerate maze")
     print("2. Clear maze")
-    print("3. Run BFS (shortest path)")
-    print("4. Blind exploration")
-    print("5. Quit")
+    print("3. Add obstacle")
+    print("4. Remove obstacle")
+    print("5. Run BFS (shortest path)")
+    print("6. Blind exploration")
+    print("7. Quit")
 
 
 # ---------------- program starts here ----------------
@@ -99,16 +105,34 @@ while running:
         draw_maze(obstacles, mouse, cheese)
 
     elif choice == "3":
+        cell = ask_position("Obstacle")
+        if edit_maze.add_obstacle(obstacles, cell, mouse, cheese):
+            print("Obstacle added.")
+        else:
+            print("You can't put an obstacle on the mouse or the cheese.")
+        print()
+        draw_maze(obstacles, mouse, cheese)
+
+    elif choice == "4":
+        cell = ask_position("Obstacle to remove")
+        if edit_maze.remove_obstacle(obstacles, cell):
+            print("Obstacle removed.")
+        else:
+            print("There is no obstacle in that cell.")
+        print()
+        draw_maze(obstacles, mouse, cheese)
+
+    elif choice == "5":
         grid = make_grid(obstacles, mouse, cheese)
         steps, path, visited_order = bfs.solve(grid)
-        draw_maze(obstacles, mouse, cheese, visited_order)
+        draw_maze(obstacles, mouse, cheese, visited_order, path)
         if steps is None:
             print("The cheese cannot be reached!")
         else:
             print("Shortest path found:", steps, "steps")
         print("Cells scanned:", len(visited_order))
 
-    elif choice == "4":
+    elif choice == "6":
         grid = make_grid(obstacles, mouse, cheese)
         moves, found = bfs.explore(grid)
         draw_maze(obstacles, mouse, cheese, moves)
@@ -118,9 +142,9 @@ while running:
             print("The mouse could not find the cheese.")
         print("Moves made:", len(moves) - 1)
 
-    elif choice == "5":
+    elif choice == "7":
         print("Bye!")
         running = False
 
     else:
-        print("Please choose 1, 2, 3, 4 or 5.")
+        print("Please choose a number from 1 to 7.")
